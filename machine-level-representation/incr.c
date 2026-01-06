@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int incr(long *p, long val) {
 	long x = *p;
 	long y = x + val;
@@ -7,11 +9,8 @@ int incr(long *p, long val) {
 
 int main() {
 	long x = 5;
-	long y = incr(&x, 3);
-	y = incr(&x, 3);
-	y = incr(&x, 3);
-	y = incr(&x, 3);
-	y = incr(&x, 3);
-	y = incr(&x, 3);
-	return y;
+	long y = 3;
+	long z = incr(&x, 3);
+	printf("%d\n", x + y + z);
+	return 0;
 }
