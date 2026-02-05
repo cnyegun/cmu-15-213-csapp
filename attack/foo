@@ -1,0 +1,3 @@
+48 89 c2             	/* mov    %rax,%rdx */
+48 83 c2 05          	/* add    $0x5,%rdx */
+c3                   	/* ret              */
