@@ -1,3 +1,0 @@
-sum:
-irmovq $0, %rax
-

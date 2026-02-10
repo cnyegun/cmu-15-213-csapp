@@ -1,0 +1,5 @@
+0x000:                      |         .pos 0
+0x000: 30f00500000000000000 | main:   irmovq $5, %rax
+0x00a: c0f00300000000000000 |         iaddq $3, %rax       # %rax should be 8
+0x014: c0f00a00000000000000 |         iaddq $10, %rax      # %rax should be 18
+0x01e: 00                   |         halt

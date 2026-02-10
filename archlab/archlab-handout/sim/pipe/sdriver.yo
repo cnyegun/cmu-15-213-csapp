@@ -1,0 +1,120 @@
+                            | #######################################################################
+                            | # Test for copying block of size 4;
+                            | #######################################################################
+0x000:                      | 	.pos 0
+0x000: 30f46002000000000000 | main:	irmovq Stack, %rsp  	# Set up stack pointer
+                            | 
+                            | 	# Set up arguments for copy function and then invoke it
+0x00a: 30f20400000000000000 | 	irmovq $4, %rdx		# src and dst have 4 elements
+0x014: 30f6b801000000000000 | 	irmovq dest, %rsi	# dst array
+0x01e: 30f78001000000000000 | 	irmovq src, %rdi	# src array
+0x028: 803200000000000000   | 	call ncopy		 
+0x031: 00                   | 	halt			# should halt with num nonzeros in %rax
+0x032:                      | StartFun:
+                            | ##################################################################
+                            | # ncopy.ys - Copy a src block of len words to dst.
+                            | # Return the number of positive words (>0) contained in src.
+                            | ##################################################################
+0x032:                      | ncopy:
+0x032: 6300                 | 	xorq %rax,%rax
+0x034: 6222                 | 	andq %rdx,%rdx
+0x036: 717a01000000000000   | 	jle Done
+                            | 
+0x03f:                      | Loop4:                  # Process 4 elements at a time
+0x03f: 30f90400000000000000 |     irmovq $4, %r9
+0x049: 6192                 |     subq %r9, %rdx
+0x04b: 721501000000000000   |     jl TailPrep         # Less than 4 left
+                            |     
+0x054: 50a70000000000000000 |     mrmovq (%rdi), %r10
+0x05e: 50b70800000000000000 |     mrmovq 8(%rdi), %r11
+0x068: 50c71000000000000000 |     mrmovq 16(%rdi), %r12
+0x072: 50d71800000000000000 |     mrmovq 24(%rdi), %r13
+                            |     
+0x07c: 40a60000000000000000 |     rmmovq %r10, (%rsi)
+0x086: 40b60800000000000000 |     rmmovq %r11, 8(%rsi)
+0x090: 40c61000000000000000 |     rmmovq %r12, 16(%rsi)
+0x09a: 40d61800000000000000 |     rmmovq %r13, 24(%rsi)
+                            |     
+0x0a4: 62aa                 |     andq %r10, %r10
+0x0a6: 71b900000000000000   |     jle C2
+0x0af: c0f00100000000000000 |     iaddq $1, %rax
+0x0b9: 62bb                 | C2: andq %r11, %r11
+0x0bb: 71ce00000000000000   |     jle C3
+0x0c4: c0f00100000000000000 |     iaddq $1, %rax
+0x0ce: 62cc                 | C3: andq %r12, %r12
+0x0d0: 71e300000000000000   |     jle C4
+0x0d9: c0f00100000000000000 |     iaddq $1, %rax
+0x0e3: 62db                 | C4: andq %r13, %r11
+0x0e5: 71f800000000000000   |     jle U4
+0x0ee: c0f00100000000000000 |     iaddq $1, %rax
+0x0f8:                      | U4:
+0x0f8: c0f72000000000000000 | 	iaddq $32, %rdi
+0x102: c0f62000000000000000 | 	iaddq $32, %rsi
+0x10c: 703f00000000000000   | 	jmp Loop4
+                            | 
+0x115:                      | TailPrep:
+0x115: c0f20400000000000000 |     iaddq $4, %rdx      # Restore remaining count (0-3)
+                            |     
+0x11f:                      | Tail1:                  # Process remaining 1 at a time
+0x11f: 6222                 |     andq %rdx, %rdx
+0x121: 717a01000000000000   |     jle Done
+                            |     
+0x12a: 50870000000000000000 |     mrmovq (%rdi), %r8
+0x134: 40860000000000000000 | 	rmmovq %r8, (%rsi)
+0x13e: 6288                 |     andq %r8, %r8
+0x140: 715301000000000000   |     jle Skip
+0x149: c0f00100000000000000 | 	iaddq $1, %rax
+0x153:                      | Skip:
+0x153: c0f2ffffffffffffffff |     iaddq $-1, %rdx
+0x15d: c0f70800000000000000 |     iaddq $8, %rdi
+0x167: c0f60800000000000000 |     iaddq $8, %rsi
+0x171: 701f01000000000000   |     jmp Tail1
+                            | 
+0x17a:                      | Done:
+0x17a: 90                   | 	ret
+                            | 
+0x17b:                      | End:
+0x17b:                      | EndFun:
+                            | 
+                            | ###############################
+                            | # Source and destination blocks 
+                            | ###############################
+0x180:                      | 	.align 8
+0x180:                      | src:
+0x180: 0100000000000000     | 	.quad 1
+0x188: feffffffffffffff     | 	.quad -2
+0x190: fdffffffffffffff     | 	.quad -3
+0x198: 0400000000000000     | 	.quad 4
+0x1a0: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
+                            | 
+0x1b0:                      | 	.align 16
+0x1b0:                      | Predest:
+0x1b0: fadebc0000000000     | 	.quad 0xbcdefa
+0x1b8:                      | dest:
+0x1b8: abefcd0000000000     | 	.quad 0xcdefab
+0x1c0: abefcd0000000000     | 	.quad 0xcdefab
+0x1c8: abefcd0000000000     | 	.quad 0xcdefab
+0x1d0: abefcd0000000000     | 	.quad 0xcdefab
+0x1d8:                      | Postdest:
+0x1d8: bcfade0000000000     | 	.quad 0xdefabc
+                            | 
+0x1e0:                      | .align 8
+                            | # Run time stack
+0x1e0: 0000000000000000     | 	.quad 0
+0x1e8: 0000000000000000     | 	.quad 0
+0x1f0: 0000000000000000     | 	.quad 0
+0x1f8: 0000000000000000     | 	.quad 0
+0x200: 0000000000000000     | 	.quad 0
+0x208: 0000000000000000     | 	.quad 0
+0x210: 0000000000000000     | 	.quad 0
+0x218: 0000000000000000     | 	.quad 0
+0x220: 0000000000000000     | 	.quad 0
+0x228: 0000000000000000     | 	.quad 0
+0x230: 0000000000000000     | 	.quad 0
+0x238: 0000000000000000     | 	.quad 0
+0x240: 0000000000000000     | 	.quad 0
+0x248: 0000000000000000     | 	.quad 0
+0x250: 0000000000000000     | 	.quad 0
+0x258: 0000000000000000     | 	.quad 0
+                            | 
+0x260:                      | Stack:

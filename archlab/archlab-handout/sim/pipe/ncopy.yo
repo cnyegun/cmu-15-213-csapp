@@ -1,0 +1,43 @@
+                            | ##################################################################
+                            | # ncopy.ys - Copy a src block of len words to dst.
+                            | # Return the number of positive words (>0) contained in src.
+                            | ##################################################################
+0x000:                      | ncopy:
+0x000: 6300                 | 	xorq %rax,%rax
+0x002: 6222                 | 	andq %rdx,%rdx
+0x004: 71cf00000000000000   | 	jle Done
+                            | 
+0x00d: 30f90100000000000000 |     irmovq $1, %r9
+0x017: 6192                 |     subq %r9, %rdx
+0x019: 71a600000000000000   |     jle Tail
+                            | 
+0x022:                      | Loop:   
+0x022: 50a70000000000000000 |     mrmovq (%rdi), %r10
+0x02c: 50b70800000000000000 |     mrmovq 8(%rdi), %r11
+0x036: 62aa                 |     andq %r10, %r10
+0x038: 714b00000000000000   |     jle Next
+0x041: c0f00100000000000000 |     iaddq $1, %rax
+0x04b:                      | Next:
+0x04b: 40a60000000000000000 |     rmmovq %r10, (%rsi)
+0x055: 40b60800000000000000 |     rmmovq %r11, 8(%rsi)
+0x05f: 62bb                 |     andq %r11, %r11
+0x061: 717400000000000000   |     jle Update
+0x06a: c0f00100000000000000 |     iaddq $1, %rax
+0x074:                      | Update:
+0x074: c0f2feffffffffffffff | 	iaddq $-2, %rdx
+0x07e: c0f71000000000000000 | 	iaddq $16, %rdi
+0x088: c0f61000000000000000 | 	iaddq $16, %rsi
+0x092: 6222                 | 	andq %rdx,%rdx
+0x094: 762200000000000000   | 	jg Loop
+0x09d: 72cf00000000000000   |     jl Done
+0x0a6:                      | Tail:
+0x0a6: 50870000000000000000 |     mrmovq (%rdi), %r8
+0x0b0: 40860000000000000000 | 	rmmovq %r8, (%rsi)
+0x0ba: 6288                 |     andq %r8, %r8
+0x0bc: 71cf00000000000000   |     jle Done
+0x0c5: c0f00100000000000000 | 	iaddq $1, %rax
+                            | 
+0x0cf:                      | Done:
+0x0cf: 90                   | 	ret
+                            | 
+0x0d0:                      | End:

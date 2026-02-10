@@ -1,0 +1,120 @@
+#######################################################################
+# Test for copying block of size 4;
+#######################################################################
+	.pos 0
+main:	irmovq Stack, %rsp  	# Set up stack pointer
+
+	# Set up arguments for copy function and then invoke it
+	irmovq $4, %rdx		# src and dst have 4 elements
+	irmovq dest, %rsi	# dst array
+	irmovq src, %rdi	# src array
+	call ncopy		 
+	halt			# should halt with num nonzeros in %rax
+StartFun:
+##################################################################
+# ncopy.ys - Copy a src block of len words to dst.
+# Return the number of positive words (>0) contained in src.
+##################################################################
+ncopy:
+	xorq %rax,%rax
+	andq %rdx,%rdx
+	jle Done
+
+Loop4:                  # Process 4 elements at a time
+    irmovq $4, %r9
+    subq %r9, %rdx
+    jl TailPrep         # Less than 4 left
+    
+    mrmovq (%rdi), %r10
+    mrmovq 8(%rdi), %r11
+    mrmovq 16(%rdi), %r12
+    mrmovq 24(%rdi), %r13
+    
+    rmmovq %r10, (%rsi)
+    rmmovq %r11, 8(%rsi)
+    rmmovq %r12, 16(%rsi)
+    rmmovq %r13, 24(%rsi)
+    
+    andq %r10, %r10
+    jle C2
+    iaddq $1, %rax
+C2: andq %r11, %r11
+    jle C3
+    iaddq $1, %rax
+C3: andq %r12, %r12
+    jle C4
+    iaddq $1, %rax
+C4: andq %r13, %r11
+    jle U4
+    iaddq $1, %rax
+U4:
+	iaddq $32, %rdi
+	iaddq $32, %rsi
+	jmp Loop4
+
+TailPrep:
+    iaddq $4, %rdx      # Restore remaining count (0-3)
+    
+Tail1:                  # Process remaining 1 at a time
+    andq %rdx, %rdx
+    jle Done
+    
+    mrmovq (%rdi), %r8
+	rmmovq %r8, (%rsi)
+    andq %r8, %r8
+    jle Skip
+	iaddq $1, %rax
+Skip:
+    iaddq $-1, %rdx
+    iaddq $8, %rdi
+    iaddq $8, %rsi
+    jmp Tail1
+
+Done:
+	ret
+
+End:
+EndFun:
+
+###############################
+# Source and destination blocks 
+###############################
+	.align 8
+src:
+	.quad 1
+	.quad -2
+	.quad -3
+	.quad 4
+	.quad 0xbcdefa # This shouldn't get moved
+
+	.align 16
+Predest:
+	.quad 0xbcdefa
+dest:
+	.quad 0xcdefab
+	.quad 0xcdefab
+	.quad 0xcdefab
+	.quad 0xcdefab
+Postdest:
+	.quad 0xdefabc
+
+.align 8
+# Run time stack
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+	.quad 0
+
+Stack:

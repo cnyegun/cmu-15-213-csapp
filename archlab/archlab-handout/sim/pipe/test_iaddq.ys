@@ -1,0 +1,5 @@
+        .pos 0
+main:   irmovq $5, %rax
+        iaddq $3, %rax       # %rax should be 8
+        iaddq $10, %rax      # %rax should be 18
+        halt
