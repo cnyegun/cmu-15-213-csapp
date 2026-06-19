@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 
-typedef float data_t;
+typedef long data_t;
 #define IDENT 0
 #define OP +
 
