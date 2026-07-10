@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr//bin/python
 #
 # driver.py - The driver tests the correctness of the student's cache
 #     simulator and the correctness and performance of their transpose
@@ -99,30 +99,30 @@ def main():
     # Summarize the results
     print("\nCache Lab summary:")
     print("%-22s%8s%10s%12s" % ("", "Points", "Max pts", "Misses"))
-    print("%-22s%8.1f%10d" % ("Csim correctness", csim_cscore[0], 
+    print("%-22s%8.1f%10d" % ("Csim correctness", csim_cscore[0],
                               maxscore['csim']))
 
     misses = str(miss32)
     if miss32 == 2**31-1 :
         misses = "invalid"
-    print("%-22s%8.1f%10d%12s" % ("Trans perf 32x32", trans32_score, 
+    print("%-22s%8.1f%10d%12s" % ("Trans perf 32x32", trans32_score,
                                   maxscore['trans32'], misses))
 
     misses = str(miss64)
     if miss64 == 2**31-1 :
         misses = "invalid"
-    print("%-22s%8.1f%10d%12s" % ("Trans perf 64x64", trans64_score, 
+    print("%-22s%8.1f%10d%12s" % ("Trans perf 64x64", trans64_score,
                                   maxscore['trans64'], misses))
 
     misses = str(miss61)
     if miss61 == 2**31-1 :
         misses = "invalid"
-    print("%-22s%8.1f%10d%12s" % ("Trans perf 61x67", trans61_score, 
+    print("%-22s%8.1f%10d%12s" % ("Trans perf 61x67", trans61_score,
                                   maxscore['trans61'], misses))
 
     print("%22s%8.1f%10d" % ("Total points", total_score,
-                             maxscore['csim'] + 
-                             maxscore['trans32'] + 
+                             maxscore['csim'] +
+                             maxscore['trans32'] +
                              maxscore['trans64'] +
                              maxscore['trans61']))
     
