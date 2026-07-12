@@ -4,26 +4,6 @@
 #include "stdlib.h"
 #include "assert.h"
 
-int copy_addr_until_comma(char (*dst)[16], const char *src) {
-    int i;
-    for (i = 0; i < 16; i++) {
-        if (src[i] == ',') {
-            (*dst)[i] = '\0';
-            return i;
-        }
-        (*dst)[i] = src[i];
-    }
-    return -1;
-}
-
-void parse_trace_line(char *op, char (*addr)[16], int *bytes, const char *src) {
-    assert(src != NULL);
-    assert(src[0] == ' ');
-    *op = src[1];
-    int addr_len = copy_addr_until_comma(addr, src + 3);
-    *bytes = atoi(src + 3 + addr_len + 1);
-}
-
 int main()
 {
     FILE *f = fopen("traces/yi.trace", "r");
@@ -33,17 +13,15 @@ int main()
     ssize_t len;
     while ((len = getline(&lineptr, &n, f)) != -1)
     {
-        assert(lineptr != NULL);
-        assert(lineptr[0] == ' ');
-
         lineptr[len - 1] = '\0';
         len--;
 
         char op;
-        char addr[16];
+        unsigned long addr;
         int bytes;
-        parse_trace_line(&op, &addr, &bytes, lineptr);
-        printf("op: %c, addr: %s, bytes %d\n", op, addr, bytes);
+        sscanf(lineptr, " %c %lx,%d", &op, &addr, &bytes);
+        
+        printf("op: %c, addr: 0x%lx, bytes %d\n", op, addr, bytes);
 
         free(lineptr);
         lineptr = NULL;
