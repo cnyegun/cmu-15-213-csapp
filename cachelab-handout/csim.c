@@ -6,7 +6,11 @@
 #include <unistd.h>
 #include <math.h>
 
-
+typedef struct {
+    int valid;
+    unsigned long tag;
+    unsigned long last_used;
+} cache_line_t;
 
 int main(int argc, char *argv[])
 {
@@ -24,7 +28,7 @@ int main(int argc, char *argv[])
 
     char *trace_file = NULL;
 
-    // Loop through the args, optarg is the C's global variable 
+    // Loop through the args, optarg is the getopt's global variable 
     int opt;
     while ((opt = getopt(argc, argv, "s:E:b:t:hv")) != -1) {
         switch (opt) {
@@ -65,7 +69,11 @@ int main(int argc, char *argv[])
     printf("  m: %d bit\n", t + s + b);
     printf("  Total cache size: %d bytes\n", S * E * B);
 
+    /* Init the cache array
+     * 2D array of sets and lines
+     */
 
+    cache_line_t *C = calloc(sizeof(cache_line_t), S * E);
 
     int hits = 0, misses = 0, evictions = 0;
     FILE *f = fopen(trace_file, "r");
@@ -100,13 +108,15 @@ int main(int argc, char *argv[])
          * then s bits for Set index
          * then b bits for Block offset
          */
-        long tag = addr >> (s + b);
-        long set_index = (addr << t) >> (t + b);
-        long block_offset = addr & ((1UL << b) - 1);
+        unsigned long tag = addr >> (s + b);
+        unsigned long set_index = (addr << t) >> (t + b);
+        unsigned long block_starts_at = addr & ~((1UL << b) - 1);
 
         printf("Tag: 0x%lx\n", tag);
         printf("Set index: %lu\n", set_index);
-        printf("Block offset: %lu\n", block_offset);
+        printf("Block starts at: %lx\n", block_starts_at);
+
+        // if (C[set_index][ 
 
         free(lineptr);
         lineptr = NULL;
@@ -115,6 +125,7 @@ int main(int argc, char *argv[])
     printf("---------------------------------\n");
 
     free(lineptr);
+    free(C);
     fclose(f);
     printSummary(hits, misses, evictions);
     return 0;
