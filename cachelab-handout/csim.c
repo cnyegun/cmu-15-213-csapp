@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
                 printf("Hit!\n");
                 hit_flag = 1;
                 set[i].last_used = time(NULL);
+                hits++;
                 break;
             }
             // Store invalid index in case its a miss
@@ -160,9 +161,11 @@ int main(int argc, char *argv[])
             free(lineptr);
             lineptr = NULL;
             n = 0;
+            continue;
         };
 
         if (found_invalid) {
+            misses++;
             printf("Miss\n");
             set[invalid_idx].valid = 1;
             set[invalid_idx].tag = tag;
@@ -171,7 +174,9 @@ int main(int argc, char *argv[])
 
         // Eviction
         else {
-            printf("Eviction\n");
+            printf("Miss + Eviction\n");
+            misses++;
+            evictions++;
             set[lru_idx].valid = 1;
             set[lru_idx].tag = tag;
             set[lru_idx].last_used = time(NULL);
