@@ -35,14 +35,14 @@ int main(int argc, char *argv[])
         switch (opt) {
             case 's':
                 s = atoi(optarg);
-                S = (int) pow(s, 2);
+                S = 1 << s;
                 break;
             case 'E':
                 E = atoi(optarg);
                 break;
             case 'b':
                 b = atoi(optarg);
-                B = (int) pow(b, 2);
+                B = 1 << b;
                 break;
             case 't':
                 trace_file = optarg;
