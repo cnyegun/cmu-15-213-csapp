@@ -5,11 +5,12 @@
 #include <assert.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
 
 typedef struct {
     int valid;
     unsigned long tag;
-    unsigned long last_used;
+    time_t last_used;
 } cache_line_t;
 
 int main(int argc, char *argv[])
@@ -114,9 +115,67 @@ int main(int argc, char *argv[])
 
         printf("Tag: 0x%lx\n", tag);
         printf("Set index: %lu\n", set_index);
-        printf("Block starts at: %lx\n", block_starts_at);
+        printf("Block starts at: 0x%lx\n", block_starts_at);
 
-        // if (C[set_index][ 
+        /* STEP 3: Modify the cache's array
+         * First check if the given address's cache entry are valid?
+         * If yes, check if the tag are the same? No -> Miss; Yes -> Hit
+         */
+
+        cache_line_t *set = C + (set_index * E);
+        
+        // Loop through every line in a set to find a hit 
+        // if couldn't find an invalid line, use the least recently used index to store
+
+        int hit_flag = 0;
+        int found_invalid = 0;
+        int invalid_idx = -1;
+
+        int lru_idx = 0;
+        time_t lru = time(NULL);
+
+        for (int i = 0; i < E; i++) {
+            // Hit case
+            if (set[i].valid && set[i].tag == tag) {
+                printf("Hit!\n");
+                hit_flag = 1;
+                set[i].last_used = time(NULL);
+                break;
+            }
+            // Store invalid index in case its a miss
+            else if (!set[i].valid) {
+                invalid_idx = i;
+                found_invalid = 1;
+            }
+            // Store lru index in case there's no invalid slot
+            else if (set[i].valid) {
+                if (set[i].last_used < lru) {
+                    lru = set[i].last_used;
+                    lru_idx = i;
+                }
+            }
+        }
+        
+        if (hit_flag) {
+            free(lineptr);
+            lineptr = NULL;
+            n = 0;
+        };
+
+        if (found_invalid) {
+            printf("Miss\n");
+            set[invalid_idx].valid = 1;
+            set[invalid_idx].tag = tag;
+            set[invalid_idx].last_used = time(NULL);
+        } 
+
+        // Eviction
+        else {
+            printf("Eviction\n");
+            set[lru_idx].valid = 1;
+            set[lru_idx].tag = tag;
+            set[lru_idx].last_used = time(NULL);
+        }
 
         free(lineptr);
         lineptr = NULL;
