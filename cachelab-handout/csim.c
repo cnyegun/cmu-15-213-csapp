@@ -1,21 +1,23 @@
+#define _POSIX_C_SOURCE 200809L
 #include "cachelab.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
-#include <math.h>
-#include <time.h>
+
+static int verbose = 0;
+static unsigned long clk = 0;
+#define VERB(...) do { if (verbose) printf(__VA_ARGS__); } while (0)
 
 typedef struct {
     int valid;
     unsigned long tag;
-    time_t last_used;
+    unsigned long last_used;
 } cache_line_t;
 
 int main(int argc, char *argv[])
 {
-    int verbose = 0;
     int help = 0;
 
     /* This computer is running 64 bit operating system */
@@ -55,6 +57,7 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+    (void)help;
 
     t = m - (s + b);
 
@@ -62,13 +65,6 @@ int main(int argc, char *argv[])
         printf("Usage: %s [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-
-    printf("  s: %d, S: %d\n", s, S);
-    printf("  E: %d\n", E);
-    printf("  b: %d, B: %d\n", b, B);
-    printf("  t: %d bits\n", t);
-    printf("  m: %d bit\n", t + s + b);
-    printf("  Total cache size: %d bytes\n", S * E * B);
 
     /* Init the cache array
      * 2D array of sets and lines
@@ -100,8 +96,7 @@ int main(int argc, char *argv[])
         int bytes;
         sscanf(lineptr, " %c %lx,%d", &op, &addr, &bytes);
         
-        printf("---------------------------------\n");
-        printf("Parsing line:%s\n", lineptr);
+        VERB("%c %lx,%d ", op, addr, bytes);
 
         /* STEP 2: Calculating the cache index from the given address 
          * Using the address, divide its bit pattern into segment,
@@ -111,11 +106,7 @@ int main(int argc, char *argv[])
          */
         unsigned long tag = addr >> (s + b);
         unsigned long set_index = (addr << t) >> (t + b);
-        unsigned long block_starts_at = addr & ~((1UL << b) - 1);
-
-        printf("Tag: 0x%lx\n", tag);
-        printf("Set index: %lu\n", set_index);
-        printf("Block starts at: 0x%lx\n", block_starts_at);
+        // unsigned long block_starts_at = addr & ~((1UL << b) - 1);
 
         /* STEP 3: Modify the cache's array
          * First check if the given address's cache entry are valid?
@@ -132,15 +123,19 @@ int main(int argc, char *argv[])
         int invalid_idx = -1;
 
         int lru_idx = 0;
-        time_t lru = time(NULL);
+        unsigned long lru = ++clk;
 
         for (int i = 0; i < E; i++) {
             // Hit case
             if (set[i].valid && set[i].tag == tag) {
-                printf("Hit!\n");
                 hit_flag = 1;
-                set[i].last_used = time(NULL);
+                set[i].last_used = ++clk;
+                if (op == 'M') {
+                    printf("hit ");
+                    hits++;
+                }
                 hits++;
+                VERB("hit\n");
                 break;
             }
             // Store invalid index in case its a miss
@@ -166,27 +161,39 @@ int main(int argc, char *argv[])
 
         if (found_invalid) {
             misses++;
-            printf("Miss\n");
             set[invalid_idx].valid = 1;
             set[invalid_idx].tag = tag;
-            set[invalid_idx].last_used = time(NULL);
+            set[invalid_idx].last_used = ++clk;
+            if (op == 'M') {
+                VERB("miss hit\n");
+                hits++;
+            }
+            else {
+                VERB("miss\n");
+            }
         } 
 
         // Eviction
         else {
-            printf("Miss + Eviction\n");
             misses++;
             evictions++;
             set[lru_idx].valid = 1;
             set[lru_idx].tag = tag;
-            set[lru_idx].last_used = time(NULL);
+            set[lru_idx].last_used = ++clk;
+            if (op == 'M') {
+                VERB("miss eviction hit\n");
+                hits++;
+            }
+            else {
+                VERB("miss eviction\n");
+            }
+
         }
 
         free(lineptr);
         lineptr = NULL;
         n = 0;
     }
-    printf("---------------------------------\n");
 
     free(lineptr);
     free(C);
