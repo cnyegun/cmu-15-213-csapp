@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     FILE *f = fopen(trace_file, "r");
 
     char *lineptr = NULL;
-    size_t n;
+    size_t n = 0;
     ssize_t len;
     while ((len = getline(&lineptr, &n, f)) != -1)
     {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
                 hit_flag = 1;
                 set[i].last_used = ++clk;
                 if (op == 'M') {
-                    printf("hit ");
+                    VERB("hit ");
                     hits++;
                 }
                 hits++;
@@ -153,9 +153,6 @@ int main(int argc, char *argv[])
         }
         
         if (hit_flag) {
-            free(lineptr);
-            lineptr = NULL;
-            n = 0;
             continue;
         };
 
@@ -189,10 +186,6 @@ int main(int argc, char *argv[])
             }
 
         }
-
-        free(lineptr);
-        lineptr = NULL;
-        n = 0;
     }
 
     free(lineptr);
