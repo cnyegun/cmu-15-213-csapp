@@ -186,7 +186,6 @@ void eval(char *cmdline)
     pid_t child_pid = fork();
     // Postpone any signal
 
-
     if (child_pid == 0) {
         /* Child's process */
         sigprocmask(SIG_UNBLOCK, &mask, NULL);
@@ -414,10 +413,13 @@ void sigchld_handler(int sig)
 void sigint_handler(int sig) 
 {
     int _errno = errno;
+
+    // This might change the errno global constant if error occured. 
     pid_t pid = fgpid(jobs);
     if (pid != 0) {
         kill(-pid, SIGINT);
     }
+
     errno = _errno;
 }
 
